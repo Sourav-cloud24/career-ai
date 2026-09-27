@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+:root {
+  --background: #FAFAFC;
+  --foreground: #171423;
+
+  /* CareerAI palette */
+  --canvas: #FAFAFC;
+  --ink: #171423;
+  --muted: #6F6C82;
+  --indigo: #4338CA;
+  --indigo-hover: #372DAE;
+  --violet: #8B5CF6;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-canvas: var(--canvas);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-indigo: var(--indigo);
+  --color-indigo-hover: var(--indigo-hover);
+  --color-violet: var(--violet);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
