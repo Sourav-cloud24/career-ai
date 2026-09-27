@@ -1,7 +1,9 @@
 import bcrypt from "bcryptjs"
+import { randomUUID } from "crypto";
 import { createUser, findUserByEmail } from "./auth.repository.js"
 import { generateAccessToken, generateRefreshToken } from "../../utils/jwt.js";
 import { findUserById } from "./user.repository.js";
+import { createRefreshToken, revokeRefreshToken } from "./refresh-token.repository.js";
 
 
 export const registerUser = async ({
@@ -50,8 +52,24 @@ export const loginUser = async ({
         throw error;
     }
 
-    const accessToken = generateAccessToken(existingUser);
-    const refreshToken = generateRefreshToken(existingUser);
+const accessToken = generateAccessToken(existingUser);
+
+const tokenId = randomUUID();
+
+const refreshToken = generateRefreshToken(
+  existingUser,
+  tokenId
+);
+
+const expiresAt = new Date(
+  Date.now() + 7 * 24 * 60 * 60 * 1000
+);
+
+await createRefreshToken({
+  userId: user.id,
+  tokenId,
+  expiresAt,
+});
 
     return {
         user: {
@@ -71,17 +89,87 @@ export const refreshAccessToken = async (refreshToken) => {
       process.env.JWT_REFRESH_SECRET
     );
 
-    const user = await findUserById(decoded.userId);
+    const storedToken =
+      await findRefreshTokenByTokenId(
+        decoded.tokenId
+      );
 
-    if (!user) {
-      const error = new Error("User not found");
+    if (!storedToken) {
+      const error = new Error(
+        "Refresh token session not found"
+      );
+
       error.statusCode = 401;
+
       throw error;
     }
 
-    const accessToken = generateAccessToken(user);
+    if (storedToken.revoked_at) {
+      const error = new Error(
+        "Refresh token has been revoked"
+      );
 
-    return accessToken;
+      error.statusCode = 401;
+
+      throw error;
+    }
+
+    if (
+      new Date(storedToken.expires_at) <= new Date()
+    ) {
+      const error = new Error(
+        "Refresh token has expired"
+      );
+
+      error.statusCode = 401;
+
+      throw error;
+    }
+
+    const user = await findUserById(
+      decoded.userId
+    );
+
+    if (!user) {
+      const error = new Error("User not found");
+
+      error.statusCode = 401;
+
+      throw error;
+    }
+
+    // Revoke old refresh token
+    await revokeRefreshToken(
+      decoded.tokenId
+    );
+
+    // Create new refresh token
+    const newTokenId = randomUUID();
+
+    const newRefreshToken =
+      generateRefreshToken(
+        user,
+        newTokenId
+      );
+
+    const newExpiresAt = new Date(
+      Date.now() + 7 * 24 * 60 * 60 * 1000
+    );
+
+    await createRefreshToken({
+      userId: user.id,
+      tokenId: newTokenId,
+      expiresAt: newExpiresAt,
+    });
+
+    // Create new access token
+    const accessToken =
+      generateAccessToken(user);
+
+    return {
+      accessToken,
+      refreshToken: newRefreshToken,
+    };
   } catch (error) {
     if (error.statusCode === 401) {
       throw error;
@@ -94,5 +182,23 @@ export const refreshAccessToken = async (refreshToken) => {
     authError.statusCode = 401;
 
     throw authError;
+  }
+};
+
+export const logoutUser = async (refreshToken) => {
+  if (!refreshToken) {
+    return;
+  }
+
+  try {
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET
+    );
+
+    await revokeRefreshToken(decoded.tokenId);
+  } catch (error) {
+    // Even if the refresh token is invalid or expired,
+    // logout should still continue.
   }
 };

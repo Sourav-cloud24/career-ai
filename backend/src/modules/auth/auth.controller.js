@@ -1,5 +1,5 @@
 import { loginSchema, registerSchema } from "./auth.validator.js";
-import { loginUser, refreshAccessToken, registerUser } from "./auth.service.js";
+import { loginUser, logoutUser, refreshAccessToken, registerUser } from "./auth.service.js";
 
 export const register = async (req, res, next) => {
   try {
@@ -52,19 +52,59 @@ export const refresh = async (req, res, next) => {
     const refreshToken = req.cookies.refreshToken;
 
     if (!refreshToken) {
-      const error = new Error("Refresh token is required");
+      const error = new Error(
+        "Refresh token is required"
+      );
+
       error.statusCode = 401;
+
       throw error;
     }
 
-    const accessToken = await refreshAccessToken(refreshToken);
+    const result =
+      await refreshAccessToken(refreshToken);
+
+    res.cookie(
+      "refreshToken",
+      result.refreshToken,
+      {
+        httpOnly: true,
+        secure:
+          process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge:
+          7 * 24 * 60 * 60 * 1000,
+      }
+    );
 
     return res.status(200).json({
       success: true,
-      message: "Access token refreshed successfully",
+      message:
+        "Access token refreshed successfully",
       data: {
-        accessToken,
+        accessToken: result.accessToken,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const logout = async (req, res, next) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+
+    await logoutUser(refreshToken);
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Logout successful",
     });
   } catch (error) {
     next(error);

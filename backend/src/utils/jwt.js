@@ -4,7 +4,8 @@ export const generateAccessToken = (user) => {
     return jwt.sign(
         {
             userId: user.id,
-            email: user.email
+            email: user.email,
+            tokenId
         },
         process.env.JWT_ACCESS_SECRET,
         {
