@@ -1,103 +1,90 @@
-import bcrypt from "bcryptjs"
+import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
-import { createUser, findUserByEmail } from "./auth.repository.js"
+import { createUser, findUserByEmail } from "./auth.repository.js";
 import { generateAccessToken, generateRefreshToken } from "../../utils/jwt.js";
 import { findUserById } from "./user.repository.js";
-import { createRefreshToken, revokeRefreshToken } from "./refresh-token.repository.js";
+import {
+  createRefreshToken,
+  findRefreshTokenByTokenId,
+  revokeRefreshToken,
+} from "./refresh-token.repository.js";
+import jwt from "jsonwebtoken";
 
+export const registerUser = async ({ fullName, email, password }) => {
+  const existingUser = await findUserByEmail(email);
 
-export const registerUser = async ({
+  if (existingUser) {
+    const error = new Error("User with this email already exists");
+    error.statusCode = 409;
+    throw error;
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+
+  const user = await createUser({
     fullName,
     email,
+    passwordHash,
+  });
+
+  return user;
+};
+
+export const loginUser = async ({ email, password }) => {
+  const existingUser = await findUserByEmail(email);
+
+  // console.log("existingUser-->", existingUser)
+
+  if (!existingUser) {
+    const error = new Error("Invalid email or password");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const isPasswordValid = await bcrypt.compare(
     password,
-}) => {
-    const existingUser = await findUserByEmail(email)
+    existingUser.password_hash,
+  );
 
-    if (existingUser) {
-        const error = new Error("User with this email already exists");
-        error.statusCode = 409;
-        throw error;
-    }
+  if (!isPasswordValid) {
+    const error = new Error("Invalid email or password");
+    error.statusCode = 401;
+    throw error;
+  }
 
-    const passwordHash = await bcrypt.hash(password, 12)
+  const accessToken = generateAccessToken(existingUser);
 
-    const user = await createUser({
-        fullName,
-        email,
-        passwordHash,
-    })
+  const tokenId = randomUUID();
 
-    return user
-}
+  const refreshToken = generateRefreshToken(existingUser, tokenId);
 
-export const loginUser = async ({
-    email,
-    password,
-}) => {
-    const existingUser = await findUserByEmail(email)
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    // console.log("existingUser-->", existingUser)
+  await createRefreshToken({
+    userId: existingUser.id,
+    tokenId,
+    expiresAt,
+  });
 
-    if (!existingUser) {
-        const error = new Error("Invalid email or password");
-        error.statusCode = 401;
-        throw error;
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, existingUser.password_hash)
-
-    if (!isPasswordValid) {
-        const error = new Error("Invalid email or password");
-        error.statusCode = 401;
-        throw error;
-    }
-
-const accessToken = generateAccessToken(existingUser);
-
-const tokenId = randomUUID();
-
-const refreshToken = generateRefreshToken(
-  existingUser,
-  tokenId
-);
-
-const expiresAt = new Date(
-  Date.now() + 7 * 24 * 60 * 60 * 1000
-);
-
-await createRefreshToken({
-  userId: user.id,
-  tokenId,
-  expiresAt,
-});
-
-    return {
-        user: {
-            id: existingUser.id,
-            fullName: existingUser.full_name,
-            email: existingUser.email,
-        },
-        accessToken,
-        refreshToken
-    };
-}
+  return {
+    user: {
+      id: existingUser.id,
+      fullName: existingUser.full_name,
+      email: existingUser.email,
+    },
+    accessToken,
+    refreshToken,
+  };
+};
 
 export const refreshAccessToken = async (refreshToken) => {
   try {
-    const decoded = jwt.verify(
-      refreshToken,
-      process.env.JWT_REFRESH_SECRET
-    );
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
 
-    const storedToken =
-      await findRefreshTokenByTokenId(
-        decoded.tokenId
-      );
+    const storedToken = await findRefreshTokenByTokenId(decoded.tokenId);
 
     if (!storedToken) {
-      const error = new Error(
-        "Refresh token session not found"
-      );
+      const error = new Error("Refresh token session not found");
 
       error.statusCode = 401;
 
@@ -105,30 +92,22 @@ export const refreshAccessToken = async (refreshToken) => {
     }
 
     if (storedToken.revoked_at) {
-      const error = new Error(
-        "Refresh token has been revoked"
-      );
+      const error = new Error("Refresh token has been revoked");
 
       error.statusCode = 401;
 
       throw error;
     }
 
-    if (
-      new Date(storedToken.expires_at) <= new Date()
-    ) {
-      const error = new Error(
-        "Refresh token has expired"
-      );
+    if (new Date(storedToken.expires_at) <= new Date()) {
+      const error = new Error("Refresh token has expired");
 
       error.statusCode = 401;
 
       throw error;
     }
 
-    const user = await findUserById(
-      decoded.userId
-    );
+    const user = await findUserById(decoded.userId);
 
     if (!user) {
       const error = new Error("User not found");
@@ -139,22 +118,14 @@ export const refreshAccessToken = async (refreshToken) => {
     }
 
     // Revoke old refresh token
-    await revokeRefreshToken(
-      decoded.tokenId
-    );
+    await revokeRefreshToken(decoded.tokenId);
 
     // Create new refresh token
     const newTokenId = randomUUID();
 
-    const newRefreshToken =
-      generateRefreshToken(
-        user,
-        newTokenId
-      );
+    const newRefreshToken = generateRefreshToken(user, newTokenId);
 
-    const newExpiresAt = new Date(
-      Date.now() + 7 * 24 * 60 * 60 * 1000
-    );
+    const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     await createRefreshToken({
       userId: user.id,
@@ -163,8 +134,7 @@ export const refreshAccessToken = async (refreshToken) => {
     });
 
     // Create new access token
-    const accessToken =
-      generateAccessToken(user);
+    const accessToken = generateAccessToken(user);
 
     return {
       accessToken,
@@ -175,9 +145,7 @@ export const refreshAccessToken = async (refreshToken) => {
       throw error;
     }
 
-    const authError = new Error(
-      "Invalid or expired refresh token"
-    );
+    const authError = new Error("Invalid or expired refresh token");
 
     authError.statusCode = 401;
 
@@ -191,10 +159,7 @@ export const logoutUser = async (refreshToken) => {
   }
 
   try {
-    const decoded = jwt.verify(
-      refreshToken,
-      process.env.JWT_REFRESH_SECRET
-    );
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
 
     await revokeRefreshToken(decoded.tokenId);
   } catch (error) {

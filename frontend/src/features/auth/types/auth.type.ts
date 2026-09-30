@@ -1,12 +1,12 @@
 export interface RegisterRequest {
-  fullname: string;
+  fullName: string;
   email: string;
   password: string;
 }
 
 export interface LoginRequest {
-    email: string;
-    password: string;
+  email: string;
+  password: string;
 }
 
 export interface User {
@@ -19,8 +19,11 @@ export interface LoginResponse {
   success: boolean;
   message: string;
   data: {
-    user: User;
+    user: {
+      id: string;
+      fullName: string;
+      email: string;
+    };
     accessToken: string;
-    refreshToken: string;
   };
 }

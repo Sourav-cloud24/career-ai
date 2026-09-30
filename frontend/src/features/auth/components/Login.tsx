@@ -3,9 +3,51 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import z from "zod";
+import { useMutation } from "@tanstack/react-query";
+import { authApi } from "../apis/auth.api";
+import { setAccessToken } from "@/lib/authToken";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const loginSchema = z.object({
+    email: z.string().trim().email("Enter a valid email address"),
+
+    password: z.string().min(1, "Password is required"),
+  });
+
+  type LoginValues = z.infer<typeof loginSchema>;
+
+  const {register, handleSubmit, reset} = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+const { mutate: loginUser, isPending } = useMutation({
+  mutationFn: authApi.loginUser,
+
+  onSuccess: (response) => {
+    const { accessToken, user } = response.data;
+
+    setAccessToken(accessToken);
+    console.log("Logged in user:", user);
+
+    reset();
+  },
+
+  onError: (error) => {
+    console.error("Login failed:", error);
+  },
+});
+
+const onSubmit = (data: LoginValues) => {
+  loginUser(data);
+};
 
   return (
     <div className="min-h-screen bg-white">
@@ -13,8 +55,8 @@ const Login = () => {
         {/* ================= LEFT SIDE ================= */}
         <div className="relative overflow-hidden bg-[#F5F7FF] lg:flex">
           {/* Decorative background */}
-          <div className="absolute -left-32 -top-32 h-100 w-[400px] rounded-full bg-indigo-100/60 blur-3xl" />
-          <div className="absolute -bottom-32 -right-32 h-100 w-[400px] rounded-full bg-violet-100/60 blur-3xl" />
+          <div className="absolute -left-32 -top-32 h-100 w-100 rounded-full bg-indigo-100/60 blur-3xl" />
+          <div className="absolute -bottom-32 -right-32 h-100 w-100 rounded-full bg-violet-100/60 blur-3xl" />
 
           <div className="relative flex w-full flex-col justify-between p-12 xl:p-16">
             {/* Logo */}
@@ -213,7 +255,7 @@ const Login = () => {
 
         {/* ================= RIGHT SIDE ================= */}
         <div className="flex min-h-screen items-center justify-center px-6 py-12 sm:px-10 lg:px-16 xl:px-24">
-          <div className="w-full max-w-[420px]">
+          <div className="w-full max-w-105">
             {/* Mobile Logo */}
             <div className="mb-12 flex items-center gap-2 lg:hidden">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600">
@@ -251,7 +293,7 @@ const Login = () => {
             </div>
 
             {/* Form */}
-            <div className="space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               {/* Email */}
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
@@ -261,6 +303,7 @@ const Login = () => {
                 <input
                   type="email"
                   placeholder="Enter your email"
+                  {...register("email")}
                   className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
                 />
               </div>
@@ -275,6 +318,7 @@ const Login = () => {
                   <input
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
+                    {...register("password")}
                     className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 pr-11 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
                   />
 
@@ -294,10 +338,11 @@ const Login = () => {
 
               {/* Sign in */}
               <button
-                type="button"
+                type="submit"
+                disabled={isPending}
                 className="h-11 w-full rounded-lg bg-indigo-600 text-sm font-semibold text-white transition hover:bg-indigo-700 active:scale-[0.99]"
               >
-                Sign in
+                {isPending ? "Signing in..." : "Sign in"}
               </button>
 
               {/* Divider */}
@@ -305,14 +350,8 @@ const Login = () => {
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-slate-200" />
                 </div>
-
-                <div className="relative flex justify-center">
-                  <span className="bg-white px-3 text-xs text-slate-400">
-                    OR
-                  </span>
-                </div>
               </div>
-            </div>
+            </form>
 
             {/* Register */}
             <p className="mt-8 text-center text-sm text-slate-500">

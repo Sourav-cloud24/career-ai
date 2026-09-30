@@ -10,5 +10,6 @@ authRoutes.post("/login", login);
 // authRoutes.post("/login", login);
 authRoutes.post("/logout", logout);
 authRoutes.get("/me", authenticate, getCurrentUser);
+authRoutes.post("/refresh", refresh);
 
 export default authRoutes;

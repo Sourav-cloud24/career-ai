@@ -3,10 +3,69 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
+import z from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { authApi } from "../apis/auth.api";
+import { useRouter } from "next/navigation";
 
 const Register = () => {
+  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const registrationSchema = z.object({
+    fullName: z
+      .string()
+      .trim()
+      .min(2, "Full name must be at least 2 characters")
+      .max(100, "Full name must not exceed 100 characters"),
+
+    email: z.string().trim().email("Enter a valid email address"),
+
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(100, "Password must not exceed 100 characters"),
+
+    confirmPassword: z
+      .string()
+      .min(1, "Please confirm your password"),
+  }).refine((data) => data.password === data.confirmPassword,
+  {
+    message: "Password do not match",
+    path: ["confirmPassword"]
+  }
+);
+
+  type RegistrationValues = z.infer<typeof registrationSchema>;
+
+  const {register, handleSubmit, reset} = useForm<RegistrationValues>({
+    resolver: zodResolver(registrationSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
+
+const { mutate: registerUser, isPending } = useMutation({
+  mutationFn: authApi.registerUser,
+
+  onSuccess: (response) => {
+    router.push("/");
+    reset();
+  },
+
+  onError: (error) => {
+    console.error("Registration failed:", error);
+  },
+});
+
+  const onSubmit = (data: RegistrationValues) => {
+    registerUser(data);
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -268,7 +327,7 @@ const Register = () => {
         {/* ================= RIGHT SIDE ================= */}
         <div className="flex min-h-screen items-center justify-center px-6 py-12 sm:px-10 lg:px-16 xl:px-24">
 
-          <div className="w-full max-w-[420px]">
+          <div className="w-full max-w-105">
 
             {/* Mobile Logo */}
             <div className="mb-10 flex items-center gap-2 lg:hidden">
@@ -322,7 +381,7 @@ const Register = () => {
             </div>
 
             {/* Form */}
-            <div className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
               {/* Full Name */}
               <div>
@@ -332,6 +391,7 @@ const Register = () => {
 
                 <input
                   type="text"
+                  {...register("fullName")}
                   placeholder="Enter your full name"
                   className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
                 />
@@ -345,6 +405,7 @@ const Register = () => {
 
                 <input
                   type="email"
+                  {...register("email")}
                   placeholder="Enter your email"
                   className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
                 />
@@ -361,6 +422,7 @@ const Register = () => {
                   <input
                     type={showPassword ? "text" : "password"}
                     placeholder="Create a password"
+                    {...register("password")}
                     className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 pr-11 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
                   />
 
@@ -390,6 +452,7 @@ const Register = () => {
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     placeholder="Confirm your password"
+                    {...register("confirmPassword")}
                     className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3.5 pr-11 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
                   />
 
@@ -444,7 +507,7 @@ const Register = () => {
 
               {/* Create Account */}
               <button
-                type="button"
+                type="submit"
                 className="mt-1 h-11 w-full rounded-lg bg-indigo-600 text-sm font-semibold text-white transition hover:bg-indigo-700 active:scale-[0.99]"
               >
                 Create account
@@ -459,7 +522,7 @@ const Register = () => {
 
               </div>
 
-            </div>
+            </form>
 
             {/* Login Link */}
             <p className="mt-7 text-center text-sm text-slate-500">
