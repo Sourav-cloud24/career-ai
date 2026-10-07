@@ -1,4 +1,4 @@
-import { createJobDescription, getJobDescriptionsByUserId } from "./job-description.repository.js";
+import { createJobDescription, deleteJobDescription, getJobDescriptionsByUserId } from "./job-description.repository.js";
 
 export const createJobDescriptionRecord = async ({
     userId,
@@ -21,3 +21,9 @@ export const getUserJobDescriptions = async (userId) => {
 
     return jobDescriptions;
 };
+
+export const deleteUserJobDescriptions = async ({ jobId, userId }) => {
+    const jobDescription = await deleteJobDescription({jobId, userId})
+
+    return jobDescription
+}

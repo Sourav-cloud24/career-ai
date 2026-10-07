@@ -9,9 +9,11 @@ import z from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { authApi } from "../apis/auth.api";
 import { setAccessToken } from "@/lib/authToken";
+import { useRouter } from "next/navigation";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter()
   const loginSchema = z.object({
     email: z.string().trim().email("Enter a valid email address"),
 
@@ -36,7 +38,7 @@ const { mutate: loginUser, isPending } = useMutation({
 
     setAccessToken(accessToken);
     console.log("Logged in user:", user);
-
+    router.push("/dashboard")
     reset();
   },
 

@@ -1,5 +1,6 @@
 import {
   createJobDescriptionRecord,
+  deleteUserJobDescriptions,
   getUserJobDescriptions,
 } from "./job-description.service.js";
 
@@ -55,5 +56,33 @@ export const getJobDescriptions = async (req, res) => {
       success: false,
       message: "Failed to fetch job descriptions",
     });
+  }
+};
+
+export const deleteJobDescriptions = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+    const jobId = req.params.jobId;
+    console.log("userId-->", userId, "jobId-->", jobId)
+
+    const deletedJobDescription = await deleteUserJobDescriptions({
+      jobId,
+      userId,
+    });
+
+    if (!deletedJobDescription) {
+      return res.status(404).json({
+        success: false,
+        message: "Job dscription not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Job Description deleted successfully",
+    });
+  } catch (error) {
+    console.error("deleted JobDescription error:", error);
+    next(error);
   }
 };

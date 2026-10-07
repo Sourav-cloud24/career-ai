@@ -60,3 +60,49 @@ export const updateExtractedText = async ({resumeId, extractedText}) => {
 
   return result.rows[0] || null
 }
+
+export const getResumes = async (userId) => {
+  const result = await pool.query(
+    `
+      SELECT
+        id,
+        user_id,
+        file_name,
+        file_type,
+        file_size,
+        storage_key,
+        extracted_text,
+        created_at,
+        updated_at
+      FROM resumes
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+    `,
+    [userId]
+  );
+
+  return result.rows;
+};
+
+export const deleteResume = async ({ resumeId, userId }) => {
+  const result = await pool.query(
+    `
+      DELETE FROM resumes
+      WHERE id = $1
+        AND user_id = $2
+      RETURNING
+        id,
+        user_id,
+        file_name,
+        file_type,
+        file_size,
+        storage_key,
+        extracted_text,
+        created_at,
+        updated_at
+    `,
+    [resumeId, userId]
+  );
+
+  return result.rows[0] || null;
+};

@@ -55,3 +55,24 @@ export const getJobDescriptionsByUserId = async (userId) => {
 
     return result.rows;
 };
+
+export const deleteJobDescription = async ({ jobId, userId }) => {
+  const result = await pool.query(
+    `
+      DELETE FROM job_descriptions
+      WHERE id = $1
+        AND user_id = $2
+      RETURNING
+        id,
+        user_id,
+        job_title,
+        company_name,
+        description,
+        created_at,
+        updated_at
+    `,
+    [jobId, userId]
+  );
+
+  return result.rows[0] || null;
+};

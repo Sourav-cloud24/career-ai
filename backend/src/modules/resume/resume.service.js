@@ -1,5 +1,5 @@
 import { extractResumeText } from "../../utils/resume-parser.js";
-import { createResume, updateExtractedText } from "./resume.repository.js"
+import { createResume, deleteResume, getResumes, updateExtractedText } from "./resume.repository.js"
 import path from "path"
 
 export const createResumeRecord = async ({userId, file}) => {
@@ -25,4 +25,16 @@ export const createResumeRecord = async ({userId, file}) => {
     });
 
     return updatedResume
+}
+
+export const getResumesRecord = async (userId) => {
+    const resumes = await getResumes(userId)
+
+    return resumes
+}
+
+export const deleteResumeRecord = async ({ resumeId, userId }) => {
+    const resume = await deleteResume({resumeId, userId})
+
+    return resume
 }

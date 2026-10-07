@@ -79,35 +79,59 @@ export const loginUser = async ({ email, password }) => {
 
 export const refreshAccessToken = async (refreshToken) => {
   try {
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_SECRET
+    );
 
-    const storedToken = await findRefreshTokenByTokenId(decoded.tokenId);
+    console.log("1. DECODED:", decoded);
+
+    const storedToken =
+      await findRefreshTokenByTokenId(decoded.tokenId);
+
+    console.log("2. STORED TOKEN:", storedToken);
 
     if (!storedToken) {
-      const error = new Error("Refresh token session not found");
+      const error = new Error(
+        "Refresh token session not found"
+      );
 
       error.statusCode = 401;
 
       throw error;
     }
+
+    console.log("3. SESSION FOUND");
 
     if (storedToken.revoked_at) {
-      const error = new Error("Refresh token has been revoked");
+      const error = new Error(
+        "Refresh token has been revoked"
+      );
 
       error.statusCode = 401;
 
       throw error;
     }
 
-    if (new Date(storedToken.expires_at) <= new Date()) {
-      const error = new Error("Refresh token has expired");
+    console.log("4. TOKEN NOT REVOKED");
+
+    if (
+      new Date(storedToken.expires_at) <= new Date()
+    ) {
+      const error = new Error(
+        "Refresh token has expired"
+      );
 
       error.statusCode = 401;
 
       throw error;
     }
+
+    console.log("5. TOKEN NOT EXPIRED");
 
     const user = await findUserById(decoded.userId);
+
+    console.log("6. USER:", user);
 
     if (!user) {
       const error = new Error("User not found");
@@ -117,15 +141,23 @@ export const refreshAccessToken = async (refreshToken) => {
       throw error;
     }
 
-    // Revoke old refresh token
+    console.log("7. USER FOUND");
+
     await revokeRefreshToken(decoded.tokenId);
 
-    // Create new refresh token
+    console.log("8. OLD TOKEN REVOKED");
+
     const newTokenId = randomUUID();
 
-    const newRefreshToken = generateRefreshToken(user, newTokenId);
+    console.log("9. NEW TOKEN ID:", newTokenId);
 
-    const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const newRefreshToken =
+      generateRefreshToken(user, newTokenId);
+
+    const newExpiresAt =
+      new Date(
+        Date.now() + 7 * 24 * 60 * 60 * 1000
+      );
 
     await createRefreshToken({
       userId: user.id,
@@ -133,19 +165,27 @@ export const refreshAccessToken = async (refreshToken) => {
       expiresAt: newExpiresAt,
     });
 
-    // Create new access token
-    const accessToken = generateAccessToken(user);
+    console.log("10. NEW REFRESH SESSION CREATED");
+
+    const accessToken =
+      generateAccessToken(user);
+
+    console.log("11. NEW ACCESS TOKEN CREATED");
 
     return {
       accessToken,
       refreshToken: newRefreshToken,
     };
   } catch (error) {
+    console.error("REFRESH ERROR:", error);
+
     if (error.statusCode === 401) {
       throw error;
     }
 
-    const authError = new Error("Invalid or expired refresh token");
+    const authError = new Error(
+      "Invalid or expired refresh token"
+    );
 
     authError.statusCode = 401;
 

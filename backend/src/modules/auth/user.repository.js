@@ -1,3 +1,5 @@
+import pool from "../../config/db.js";
+
 export const findUserById = async (userId) => {
   const result = await pool.query(
     `
