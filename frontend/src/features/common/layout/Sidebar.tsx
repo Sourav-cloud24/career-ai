@@ -31,7 +31,7 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="flex h-screen w-56 flex-none flex-col bg-ink p-3.5 text-white">
+    <aside className="flex h-full w-56 flex-none flex-col bg-ink p-3.5 text-white">
       {/* Brand */}
       <div className="mb-7 flex items-center gap-2 px-2">
         <svg viewBox="0 0 32 32" fill="none" className="h-[26px] w-[26px]">

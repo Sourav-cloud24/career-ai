@@ -1,6 +1,8 @@
+import AnnalysisContainer from "@/features/annalysis/components/AnalysisContainer"
+
 const AnalysisPage = () => {
     return (
-        <div>AnalysisPage</div>
+        <AnnalysisContainer/>
     )
 }
 

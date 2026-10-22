@@ -106,3 +106,29 @@ export const deleteResume = async ({ resumeId, userId }) => {
 
   return result.rows[0] || null;
 };
+
+export const getResumeById = async ({
+  resumeId,
+  userId,
+}) => {
+  const result = await pool.query(
+    `
+      SELECT
+        id,
+        user_id,
+        file_name,
+        file_type,
+        file_size,
+        storage_key,
+        extracted_text,
+        created_at,
+        updated_at
+      FROM resumes
+      WHERE id = $1
+        AND user_id = $2
+    `,
+    [resumeId, userId]
+  );
+
+  return result.rows[0] || null;
+};

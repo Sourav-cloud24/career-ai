@@ -4,7 +4,7 @@ import { authApi } from "@/features/auth/apis/auth.api";
 
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
-  timeout: 10000,
+  timeout: 60000,
   // headers: {
   //   "Content-Type": "application/json",
   // },
