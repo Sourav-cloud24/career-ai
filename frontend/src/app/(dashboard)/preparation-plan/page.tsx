@@ -1,6 +1,8 @@
+import PreparationContainer from "@/features/preparationPlan/components/PreparationContainer"
+
 const PreparationPlanPage = () => {
     return (
-        <div>PreparationPlanPage</div>
+        <PreparationContainer/>
     )
 }
 

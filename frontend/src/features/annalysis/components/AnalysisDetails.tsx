@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   ArrowLeft,
@@ -23,6 +23,8 @@ import type {
   AnalysisSkillEvidence,
 } from "../types/analysis.type";
 import { useRouter } from "next/navigation";
+import { preparationApi } from "../apis/preparation.api";
+import { PreparationPlanResponse } from "../types/preparation.type";
 
 type AnalysisDetailProps = {
   analysisId: string;
@@ -102,6 +104,7 @@ function MissingSkillCard({ item }: { item: AnalysisMissingSkill }) {
 }
 
 const AnalysisDetails = ({ analysisId, onBack }: AnalysisDetailProps) => {
+  const queryClient = useQueryClient();
   const {
     data: response,
     isPending,
@@ -112,10 +115,29 @@ const AnalysisDetails = ({ analysisId, onBack }: AnalysisDetailProps) => {
     queryKey: ["analysis", analysisId],
     queryFn: () => analysisApi.getAllAnalysisById(Number(analysisId)),
     enabled: Boolean(analysisId),
-    retry: 1,
   });
 
-  const router = useRouter()
+  const {data} = useQuery<PreparationPlanResponse>({
+    queryKey: ["preparation-plan", analysisId],
+    queryFn: () =>
+      preparationApi.getPreparationPlanByAnalysisId(Number(analysisId)),
+    enabled: Boolean(analysisId),
+  });
+
+  const { mutate, isPending: isGenerating } = useMutation({
+    mutationFn: () =>
+      preparationApi.createPreparationPlan(Number(analysisId)),
+
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({
+        queryKey: ["preparation-plan", analysisId],
+      });
+
+      router.push(`/analysis/${analysisId}/preparation-plan`);
+    },
+  });
+
+  const router = useRouter();
 
   if (isPending) {
     return (
@@ -186,10 +208,15 @@ const AnalysisDetails = ({ analysisId, onBack }: AnalysisDetailProps) => {
     <main className="pb-8 mx-10 mt-2.5">
       {/* Page header */}
       <div className="space-y-4">
-        <button className="px-3.5 py-2" onClick={() => router.replace("/analysis")}>Back</button>
+        <button
+          className="px-3.5 py-2"
+          onClick={() => router.replace("/analysis")}
+        >
+          Back
+        </button>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-2">
+          <div className="space-y-2 w-full">
             <div className="flex items-center gap-2 text-sm text-primary">
               <Sparkles className="size-4" />
               AI-powered resume analysis
@@ -208,6 +235,16 @@ const AnalysisDetails = ({ analysisId, onBack }: AnalysisDetailProps) => {
             <CheckCircle2 className="size-4" />
             {analysis.status}
           </span>
+          <div className="flex justify-end w-full">
+            <button
+              type="button"
+              onClick={() => mutate()}
+              disabled={isGenerating}
+              className="rounded-lg bg-amber-700 px-4 py-2.5 text-white disabled:opacity-50"
+            >
+              {isGenerating ? "Generating Plan..." : "Generate Preparation Plan"}
+            </button>
+          </div>
         </div>
       </div>
 

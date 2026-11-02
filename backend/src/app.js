@@ -5,6 +5,7 @@ import authRoutes from "./modules/auth/auth.routes.js"
 import resumeRoutes from "./modules/resume/resume.routes.js"
 import jobDescriptionRoutes from "./modules/job-description/job-description.routes.js"
 import analysesRoutes from "./modules/ai/analysis.routes.js"
+import preparationPlanRoutes from "./modules/preparation-plan/preparation-plan.routes.js"
 
 const app = express()
 
@@ -26,5 +27,6 @@ app.use("/api/v1/auth", authRoutes)
 app.use("/api/v1/resumes", resumeRoutes)
 app.use("/api/v1/job-description", jobDescriptionRoutes)
 app.use("/api/v1/analysis", analysesRoutes)
+app.use("/api/v1/preparation-plans", preparationPlanRoutes);
 
 export default app

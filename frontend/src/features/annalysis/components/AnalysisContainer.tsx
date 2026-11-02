@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -140,7 +139,7 @@ const AnalysisContainer = () => {
   /* ------------------------- API data -------------------------------- */
 
   const resumes: SelectableResume[] = (resumesResponse?.data ?? []).map(
-    (resume) => ({ ...resume, id: String(resume.id) })
+    (resume) => ({ ...resume, id: String(resume.id) }),
   );
   const jobDescriptions: SelectableJobDescription[] = (
     jobDescriptionsResponse?.data ?? []
@@ -157,10 +156,7 @@ const AnalysisContainer = () => {
 
   /* ----------------------- Create analysis --------------------------- */
 
-  const {
-    mutate: createAnalysis,
-    isPending,
-  } = useMutation<
+  const { mutate: createAnalysis, isPending } = useMutation<
     CreateAnalysisResponse,
     Error,
     CreateAnalysisPayload
@@ -173,8 +169,7 @@ const AnalysisContainer = () => {
       if (!result) {
         setView({
           kind: "failed",
-          message:
-            "The analysis result was missing from the server response.",
+          message: "The analysis result was missing from the server response.",
         });
         return;
       }
@@ -203,7 +198,7 @@ const AnalysisContainer = () => {
   };
 
   const handleJobDescriptionSelect = (
-    jobDescription: SelectableJobDescription
+    jobDescription: SelectableJobDescription,
   ) => {
     setJdId(jobDescription.id);
   };
@@ -243,25 +238,20 @@ const AnalysisContainer = () => {
   /* ---------------------------- Setup -------------------------------- */
 
   if (view.kind === "setup") {
-    const isLoading =
-      isLoadingResumes || isLoadingJobDescriptions;
+    const isLoading = isLoadingResumes || isLoadingJobDescriptions;
 
     const hasSelection =
-      selectedResume !== null &&
-      selectedJobDescription !== null;
+      selectedResume !== null && selectedJobDescription !== null;
 
-    const hasLoadError =
-      isResumesError || isJobDescriptionsError;
+    const hasLoadError = isResumesError || isJobDescriptionsError;
 
     return (
       <div className="flex flex-col px-5 py-6">
-        <h1 className="text-2xl font-semibold text-ink">
-          Start new analysis
-        </h1>
+        <h1 className="text-2xl font-semibold text-ink">Start new analysis</h1>
 
         <p className="mt-1 mb-6 text-[13.5px] text-muted">
-          Select a resume and a job description to compare and get
-          AI-powered insights.
+          Select a resume and a job description to compare and get AI-powered
+          insights.
         </p>
 
         {hasLoadError && (
@@ -270,8 +260,7 @@ const AnalysisContainer = () => {
             className="mb-4 flex flex-col gap-2 text-sm text-error"
           >
             <p>
-              Unable to load your resumes or job descriptions.
-              Please try again.
+              Unable to load your resumes or job descriptions. Please try again.
             </p>
 
             <button
@@ -290,12 +279,7 @@ const AnalysisContainer = () => {
         <div className="flex flex-col items-stretch gap-4 md:flex-row md:items-center">
           <SelectionCard<SelectableResume>
             step="1. Select resume"
-            icon={
-              <FileText
-                className="h-5 w-5"
-                strokeWidth={1.7}
-              />
-            }
+            icon={<FileText className="h-5 w-5" strokeWidth={1.7} />}
             itemLabel="resume"
             options={resumes}
             selectedOption={selectedResume}
@@ -311,12 +295,7 @@ const AnalysisContainer = () => {
 
           <SelectionCard<SelectableJobDescription>
             step="2. Select job description"
-            icon={
-              <Briefcase
-                className="h-5 w-5"
-                strokeWidth={1.7}
-              />
-            }
+            icon={<Briefcase className="h-5 w-5" strokeWidth={1.7} />}
             itemLabel="job description"
             options={jobDescriptions}
             selectedOption={selectedJobDescription}
@@ -342,7 +321,7 @@ const AnalysisContainer = () => {
         <p className="mt-2 text-xs text-muted">
           Select both items to begin your analysis.
         </p>
-        <AnalysisHistroy/>
+        <AnalysisHistroy />
       </div>
     );
   }
@@ -359,29 +338,18 @@ const AnalysisContainer = () => {
     return (
       <div className="flex flex-col items-center px-5 py-20 text-center">
         <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-error-bg text-error">
-          <AlertCircle
-            className="h-8 w-8"
-            strokeWidth={1.6}
-          />
+          <AlertCircle className="h-8 w-8" strokeWidth={1.6} />
         </div>
 
-        <h1 className="text-xl font-semibold text-ink">
-          Analysis failed
-        </h1>
+        <h1 className="text-xl font-semibold text-ink">Analysis failed</h1>
 
-        <p className="mt-2 max-w-sm text-[13.5px] text-muted">
-          {view.message}
-        </p>
+        <p className="mt-2 max-w-sm text-[13.5px] text-muted">{view.message}</p>
 
         <div className="mt-6 flex gap-3">
           <button
             type="button"
             onClick={startAnalysis}
-            disabled={
-              !selectedResume ||
-              !selectedJobDescription ||
-              isPending
-            }
+            disabled={!selectedResume || !selectedJobDescription || isPending}
             className="inline-flex h-10 items-center rounded-lg bg-indigo px-5 text-[13.5px] font-semibold text-white hover:bg-indigo-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
             Try again
@@ -412,8 +380,7 @@ const AnalysisContainer = () => {
     ? result.matchedSkills
     : result.matchedSkills.slice(0, 6);
 
-  const hiddenMatched =
-    result.matchedSkills.length - visibleMatched.length;
+  const hiddenMatched = result.matchedSkills.length - visibleMatched.length;
 
   return (
     <div className="flex flex-col px-5 py-6">
@@ -431,15 +398,11 @@ const AnalysisContainer = () => {
           </button>
 
           <div className="min-w-0">
-            <h1 className="text-xl font-semibold text-ink">
-              Analysis result
-            </h1>
+            <h1 className="text-xl font-semibold text-ink">Analysis result</h1>
 
             <p className="truncate text-xs text-muted">
-              {selectedResume?.file_name ?? "Selected resume"}{" "}
-              vs{" "}
-              {selectedJobDescription?.job_title ??
-                "Selected job description"}
+              {selectedResume?.file_name ?? "Selected resume"} vs{" "}
+              {selectedJobDescription?.job_title ?? "Selected job description"}
               {selectedJobDescription?.company_name
                 ? ` · ${selectedJobDescription.company_name}`
                 : ""}
@@ -450,11 +413,7 @@ const AnalysisContainer = () => {
         <button
           type="button"
           onClick={startAnalysis}
-          disabled={
-            !selectedResume ||
-            !selectedJobDescription ||
-            isPending
-          }
+          disabled={!selectedResume || !selectedJobDescription || isPending}
           className="inline-flex h-10 flex-none items-center gap-2 rounded-lg border border-line bg-white px-4 text-[13.5px] font-semibold text-ink hover:bg-line-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Sparkles className="h-4 w-4 text-indigo" />
@@ -487,9 +446,7 @@ const AnalysisContainer = () => {
             <p className="text-[13.5px] font-semibold text-ink">
               {result.matchedSkills.length} / {totalSkills}
             </p>
-            <p className="text-xs text-muted">
-              Matched skills
-            </p>
+            <p className="text-xs text-muted">Matched skills</p>
           </div>
         </div>
 
@@ -502,9 +459,7 @@ const AnalysisContainer = () => {
             <p className="text-[13.5px] font-semibold text-ink">
               {result.missingSkills.length} / {totalSkills}
             </p>
-            <p className="text-xs text-muted">
-              Missing skills
-            </p>
+            <p className="text-xs text-muted">Missing skills</p>
           </div>
         </div>
 
@@ -517,9 +472,7 @@ const AnalysisContainer = () => {
             <p className="text-[13.5px] font-semibold text-ink">
               {result.partialSkills.length} / {totalSkills}
             </p>
-            <p className="text-xs text-muted">
-              Partial matches
-            </p>
+            <p className="text-xs text-muted">Partial matches</p>
           </div>
         </div>
       </div>
@@ -542,34 +495,30 @@ const AnalysisContainer = () => {
           ) : (
             <>
               <ul className="mt-3 flex flex-col gap-2.5">
-{visibleMatched.map((item, index) => (
-  <li
-    key={`${item.skill}-${index}`}
-    className="flex items-start gap-2 text-[13.5px] text-ink"
-  >
-    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-success" />
+                {visibleMatched.map((item, index) => (
+                  <li
+                    key={`${item.skill}-${index}`}
+                    className="flex items-start gap-2 text-[13.5px] text-ink"
+                  >
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-success" />
 
-    <div>
-      <p className="font-medium">{item.skill}</p>
-      <p className="mt-1 text-xs leading-relaxed text-muted">
-        {item.evidence}
-      </p>
-    </div>
-  </li>
-))}
+                    <div>
+                      <p className="font-medium">{item.skill}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-muted">
+                        {item.evidence}
+                      </p>
+                    </div>
+                  </li>
+                ))}
               </ul>
 
               {result.matchedSkills.length > 6 && (
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowAllMatched((previous) => !previous)
-                  }
+                  onClick={() => setShowAllMatched((previous) => !previous)}
                   className="mt-3 text-[12.5px] font-medium text-indigo hover:underline"
                 >
-                  {showAllMatched
-                    ? "Show less"
-                    : `+ ${hiddenMatched} more`}
+                  {showAllMatched ? "Show less" : `+ ${hiddenMatched} more`}
                 </button>
               )}
             </>
@@ -590,21 +539,21 @@ const AnalysisContainer = () => {
             </p>
           ) : (
             <ul className="mt-3 flex flex-col gap-2.5">
-{result.missingSkills.map((item, index) => (
-  <li
-    key={`${item.skill}-${index}`}
-    className="flex items-start gap-2 text-[13.5px] text-ink"
-  >
-    <XCircle className="mt-0.5 h-4 w-4 flex-none text-error" />
+              {result.missingSkills.map((item, index) => (
+                <li
+                  key={`${item.skill}-${index}`}
+                  className="flex items-start gap-2 text-[13.5px] text-ink"
+                >
+                  <XCircle className="mt-0.5 h-4 w-4 flex-none text-error" />
 
-    <div>
-      <p className="font-medium">{item.skill}</p>
-      <p className="mt-1 text-xs leading-relaxed text-muted">
-        {item.evidence}
-      </p>
-    </div>
-  </li>
-))}
+                  <div>
+                    <p className="font-medium">{item.skill}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-muted">
+                      {item.evidence}
+                    </p>
+                  </div>
+                </li>
+              ))}
             </ul>
           )}
         </div>
