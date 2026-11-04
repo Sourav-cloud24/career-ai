@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -10,9 +10,11 @@ import { useMutation } from "@tanstack/react-query";
 import { authApi } from "../apis/auth.api";
 import { setAccessToken } from "@/lib/authToken";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/providers/AuthProvider";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const { setAuth, isAuthenticated, isLoading } = useAuth();
   const router = useRouter()
   const loginSchema = z.object({
     email: z.string().trim().email("Enter a valid email address"),
@@ -38,6 +40,8 @@ const { mutate: loginUser, isPending } = useMutation({
 
     setAccessToken(accessToken);
     console.log("Logged in user:", user);
+    // Update access token and authenticated user state
+    setAuth(user, accessToken);
     router.push("/dashboard")
     reset();
   },
@@ -50,6 +54,16 @@ const { mutate: loginUser, isPending } = useMutation({
 const onSubmit = (data: LoginValues) => {
   loginUser(data);
 };
+
+useEffect(() => {
+  if (!isLoading && isAuthenticated) {
+    router.replace("/dashboard");
+  }
+}, [isLoading, isAuthenticated, router]);
+
+if (isLoading) {
+  return <div>Restoring your session...</div>;
+}
 
   return (
     <div className="min-h-screen bg-white">

@@ -12,6 +12,7 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
+import { useAuth } from "@/providers/AuthProvider";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -25,10 +26,18 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter()
 
-  const handleLogout = () => {
-    authApi.logoutUser()
-    router.replace("/")
-  }
+  const { clearAuth } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logoutUser();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      clearAuth();
+      router.replace("/");
+    }
+  };
 
   return (
     <aside className="flex h-full w-56 flex-none flex-col bg-ink p-3.5 text-white">
