@@ -11,11 +11,13 @@ export const jobDescriptionApi = {
 
         return response.data;
     },
+
     getJobDescriptions: async () => {
         const response = await apiClient.get("/job-description");
 
         return response.data;
     },
+    
     deleteJobDescription: async (jobId: string) => {
         const response = await apiClient.delete(`/job-description/${jobId}`);
 

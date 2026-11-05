@@ -11,8 +11,9 @@ import {
   History,
   Search,
   Sparkles,
+  Trash2,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { analysisApi } from "../apis/analysis.api";
 import { useRouter } from "next/navigation";
 
@@ -30,9 +31,26 @@ const AnalysisHistroy = () => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const router = useRouter()
 
+  const queryClient = useQueryClient();
+
   const { data, isPending, isError, error } = useQuery({
     queryKey: ["analysis-history"],
     queryFn: analysisApi.getAllAnalysis,
+  });
+
+  const { mutate: deleteAnalysis, isPending: isDeleting } = useMutation({
+    mutationFn: (analysisId: number) =>
+      analysisApi.deleteAnalysisById(analysisId),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["analysis-history"],
+      });
+    },
+
+    onError: (error) => {
+      console.error("Failed to delete analysis:", error);
+    },
   });
 
   const mockAnalyses = data?.data || []
@@ -203,19 +221,28 @@ const AnalysisHistroy = () => {
                       : "Awaiting completion"}
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      router.push(
-                        `/analysis/${analysis.id}`,
-                      )
-                    }
-                    disabled={analysis.status !== "completed"}
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    View result
-                    <Sparkles className="size-4" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/analysis/${analysis.id}`)}
+                      disabled={analysis.status !== "completed"}
+                      className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      View result
+                      <Sparkles className="size-4" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => deleteAnalysis(Number(analysis.id))}
+                      disabled={isDeleting}
+                      aria-label={`Delete analysis for ${analysis.job_title}`}
+                      title="Delete analysis"
+                      className="inline-flex size-9 items-center justify-center rounded-lg border text-muted-foreground transition-colors hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
                 </div>
               </article>
             );

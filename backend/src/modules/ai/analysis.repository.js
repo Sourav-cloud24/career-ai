@@ -1,6 +1,5 @@
 import pool from "../../config/db.js";
 
-
 export const createAnalysis = async ({
   userId,
   resumeId,
@@ -47,7 +46,7 @@ export const createAnalysis = async ({
   ];
 
   const { rows } = await pool.query(query, values);
-  console.log("rows-->", rows[0])
+  console.log("rows-->", rows[0]);
 
   return rows[0];
 };
@@ -71,10 +70,7 @@ export const getAnalysisById = async ({ analysisId, userId }) => {
       AND user_id = $2
   `;
 
-  const { rows } = await pool.query(query, [
-    analysisId,
-    userId,
-  ]);
+  const { rows } = await pool.query(query, [analysisId, userId]);
 
   return rows[0] || null;
 };
@@ -104,3 +100,16 @@ ORDER BY a.created_at DESC;
 
   return rows;
 };
+
+export const deleteAnalysisById = async({analysisId, userId}) => {
+  const query = `
+    DELETE FROM analyses
+    WHERE id = $1
+      AND user_id = $2
+    RETURNING id;
+  `;
+
+  const {rows} = await pool.query(query, [analysisId, userId])
+
+  return rows[0] || null
+}

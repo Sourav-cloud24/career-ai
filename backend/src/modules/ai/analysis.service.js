@@ -3,7 +3,7 @@ import { getResumeById } from "../resume/resume.repository.js";
 import { analysisResponseSchema } from "./ai.response-schema.js";
 import { analysisResultSchema } from "./ai.schema.js";
 import { buildAnalysisPrompt } from "./analysis.prompt.js";
-import { createAnalysis, getAnalysesByUserId, getAnalysisById } from "./analysis.repository.js";
+import { createAnalysis, deleteAnalysisById, getAnalysesByUserId, getAnalysisById } from "./analysis.repository.js";
 import { generateStructuredContent } from "./gemini.service.js";
 
 export const analyzeResumeAgainstJob = async ({
@@ -105,6 +105,12 @@ export const getAnalysisByIdForUser = async ({ analysisId, userId }) => {
 
 export const getAnalysesHistory = async ({ userId }) => {
   const analyses = await getAnalysesByUserId({ userId });
+
+  return analyses;
+}
+
+export const deleteAnalyses = async ({analysisId, userId }) => {
+  const analyses = await deleteAnalysisById({analysisId, userId });
 
   return analyses;
 }

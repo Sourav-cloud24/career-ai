@@ -29,4 +29,10 @@ export const analysisApi = {
 
     return response.data;
   },
+
+  deleteAnalysisById: async (analysisId: number): Promise<AnalysisDetailResponse> => {
+    const response = await apiClient.delete<AnalysisDetailResponse>(`/analysis/${analysisId}`);
+
+    return response.data;
+  },
 };
